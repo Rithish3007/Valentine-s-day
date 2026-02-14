@@ -1,206 +1,618 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Valentine's Surprise</title>
+  <meta charset="utf-8" />
+  <title>Valentine's Surprise — Nithin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: 'Cursive', sans-serif;
-    }
-    .stage {
-      height: 100%;
-      width: 100%;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      color: white;
-      text-shadow: 2px 2px 5px black;
-      text-align: center;
-    }
-    .active { display: flex; }
-
-    /* Stage backgrounds */
-    #stage1 { background: url('background.jpeg') no-repeat top center fixed; background-size: cover; }
-    #stage2 { background: url('nithin1.png') no-repeat center center fixed; background-size: cover; }
-    #stage3 { background: url('nithin2.png') no-repeat top center fixed; background-size: contain; background-color: black; }
-    #stage4 { background: url('nithin3.png') no-repeat top center fixed; background-size: contain; background-color: black; }
-
-    h1 { font-size: 3em; margin-bottom: 20px; }
-    h2 { font-size: 2em; margin-bottom: 20px; }
-
-    /* Button styling */
-    button {
-      margin: 10px;
-      padding: 20px 50px;
-      font-size: 2em;
-      border: none;
-      border-radius: 15px;
-      cursor: pointer;
-      color: white;
-      transition: transform 0.2s, box-shadow 0.3s;
-    }
-    button:hover { transform: scale(1.1); }
-
-    .yes { background: red; box-shadow: 0 0 20px rgba(255,0,0,0.7); }
-    .no { background: gray; box-shadow: 0 0 20px rgba(255,255,255,0.5); }
-
-    /* Smooth fade + slide animation for Valentine text */
-    .smooth-text {
-      opacity: 0;
-      transform: translateY(30px);
-      animation: smoothAppear 2.5s forwards;
-    }
-    @keyframes smoothAppear {
-      0% { opacity: 0; transform: translateY(30px); }
-      100% { opacity: 1; transform: translateY(0); }
+    :root{
+      --card-w-desktop: 420px;
+      --card-h-desktop: 300px;
+      --gap-px: 18;
+      --viewport-max: 1400px;
+      --accent: #ff6f61;
+      --card-bg: #fff6f5;
+      --card-border: rgba(255,111,97,0.12);
     }
 
-    /* Button stagger animation (only Stage 2) */
-    .show-button {
-      opacity: 0;
-      animation: fadeInButton 1.5s forwards;
-    }
-    .show-button.delay1 { animation-delay: 3.5s; }
-    .show-button.delay2 { animation-delay: 4.5s; }
-    @keyframes fadeInButton {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html,body{
+      height:100%;
+      margin:0;
+      padding:0;
+      background: linear-gradient(180deg,#3b0f1a 0%, #2b0b0b 60%, #4b1220 100%);
+      font-family: 'Cursive', system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      color:#fff;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
 
-    /* Stage 3 text adjustments */
-    .stage3-text {
-      opacity: 0.7; margin-top: 200px; text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+    /* Stage layout */
+    .stage{
+      height:100%;
+      width:100%;
+      display:none;
+      justify-content:center;
+      align-items:center;
+      flex-direction:column;
+      text-align:center;
+      padding:20px;
+    }
+    .active{ display:flex; }
+
+    h1{ font-size:2.4rem; margin:0 0 12px; text-shadow:0 6px 18px rgba(0,0,0,0.45); }
+    h2{ font-size:1.1rem; margin:0 0 12px; color: rgba(255,255,255,0.92); }
+
+    button{
+      margin:10px;
+      padding:12px 26px;
+      font-size:1rem;
+      border-radius:12px;
+      border:none;
+      cursor:pointer;
+      color:#fff;
+      background: linear-gradient(90deg,var(--accent), #ff8a7a);
+      box-shadow: 0 8px 28px rgba(255,111,97,0.18);
+    }
+    button.secondary{ background: rgba(255,255,255,0.12); color:#fff; box-shadow: 0 8px 28px rgba(0,0,0,0.25); }
+
+    .smooth-text{ opacity:0; transform:translateY(18px); animation:smoothAppear 1s forwards; }
+    @keyframes smoothAppear{ to{ opacity:1; transform:translateY(0); } }
+
+    /* Stage backgrounds (images folder) */
+    #stage1{
+      background-image: url('images/background.jpeg');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: cover;
+    }
+    #stage2{
+      background-image: url('images/nithin1.png');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: cover;
+    }
+    #stage3{
+      background-image: url('images/nithin2.png');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: cover;
+    }
+    /* Stage 4: show the entire image without cropping (letterbox) */
+    #stage4{
+      background-image: url('images/nithin3.png');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+      background-color: #2b0b0b;
     }
 
-    /* Stage 4 text adjustments */
-    .stage4-text {
-      opacity: 0.8; margin-top: 250px; text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
-    }
-
-    /* Background video styling */
-    .bg-video {
+    /* Warm gradient element (reusable) */
+    .warm-gradient {
       position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      z-index: -1;
+      inset: 0;
+      z-index: 0;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #ff9aa2 0%, #ffb7b2 35%, #ffd3b6 70%, #ffefc2 100%);
+      opacity: 0.98;
+      filter: saturate(1.02);
+    }
+    .warm-gradient::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(255,255,255,0.03) 0 1px, transparent 2px),
+        radial-gradient(circle at 80% 80%, rgba(255,255,255,0.02) 0 1px, transparent 2px);
+      mix-blend-mode: overlay;
+      opacity: 0.9;
+      border-radius: inherit;
+      pointer-events: none;
     }
 
-    /* Overlay content */
-    .overlay {
-      position: relative;
-      z-index: 1;
-      text-align: center;
+    /* Train viewport & cards */
+    .wrap { width:100%; display:flex; align-items:center; justify-content:center; padding:28px 20px; box-sizing:border-box; position:relative; }
+    .train-viewport {
+      width:100%;
+      max-width:var(--viewport-max);
+      overflow:hidden;
+      border-radius:14px;
+      padding:18px;
+      box-sizing:border-box;
+      position:relative;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: transparent;
     }
-
-    /* Infinite image train effect */
+    .train-viewport .inner-warm { position:absolute; inset:0; z-index:0; border-radius:12px; }
     .image-train {
-      display: flex;
-      gap: 20px;
-      width: 100%;
+      display:flex;
+      align-items:center;
+      white-space:nowrap;
+      padding-left: 8px;
+      will-change: transform;
+      margin:0;
+      position:relative;
+      z-index:1;
+    }
+
+    .image-card {
+      width: var(--card-w-desktop);
+      height: var(--card-h-desktop);
+      flex: 0 0 auto;
+      border-radius: 12px;
       overflow: hidden;
-      margin-top: 40px;
-      animation: scrollTrain 25s linear infinite; /* infinite loop */
+      background: var(--card-bg);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.12);
+      border: 1px solid var(--card-border);
+      margin-right: calc(var(--gap-px) * 1px);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 12px;
+      box-sizing: border-box;
     }
-    .image-train img {
-      width: 200px;
-      height: auto;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(255,255,255,0.7);
+
+    .image-inner { width:100%; height:100%; display:flex; align-items:center; justify-content:center; background: transparent; }
+    .image-inner img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display:block; user-drag: none; user-select: none; -webkit-user-drag: none; }
+
+    .image-train .image-card:last-child { margin-right: 0; }
+
+    @media (max-width:1400px){ .image-card { width: 360px; height: 260px; } }
+    @media (max-width:1000px){ .image-card { width: 320px; height: 240px; } }
+    @media (max-width:700px){ .image-card { width: 300px; height: 220px; } }
+
+    .animated { animation-timing-function: linear; animation-iteration-count: infinite; animation-name: none; }
+
+    /* Envelope / letter styles */
+    .envelope { width: 420px; max-width: 92%; height: 220px; position: relative; perspective: 1000px; cursor: pointer; z-index:1; }
+    .env-body { position:absolute; inset:0; border-radius:12px; background: linear-gradient(180deg,#fff 0%, #f7f7f7 100%); box-shadow: 0 12px 40px rgba(0,0,0,0.12); transform-origin: top center; transition: transform 700ms cubic-bezier(.2,.9,.3,1); overflow:hidden; }
+    .env-flap { position:absolute; left:0; right:0; top:0; height:60%; background: linear-gradient(180deg,#ffefef 0%, #ffdede 100%); border-bottom-left-radius:12px; border-bottom-right-radius:12px; transform-origin: top center; transition: transform 700ms cubic-bezier(.2,.9,.3,1); box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
+    .envelope.open .env-flap { transform: rotateX(180deg) translateY(-6px); }
+    .envelope.open .env-body { transform: translateY(18px) scale(0.995); }
+
+    .letter {
+      width: calc(100% - 40px);
+      max-width: 760px;
+      background: #fff;
+      color: #111;
+      border-radius: 8px;
+      padding: 22px;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.12);
+      transform-origin: top center;
+      transform: translateY(20px) scale(0.98);
+      opacity: 0;
+      transition: transform 600ms cubic-bezier(.2,.9,.3,1), opacity 400ms ease;
+      position: relative;
+      overflow: hidden;
+      z-index:1;
     }
-    @keyframes scrollTrain {
-      0% { transform: translateX(100%); }
-      100% { transform: translateX(-100%); }
+    .letter.visible { transform: translateY(0) scale(1); opacity: 1; }
+    .letter .content { font-family: Georgia, 'Times New Roman', serif; font-size: 1.05rem; line-height: 1.6; color: #222; white-space: pre-wrap; position:relative; z-index:3; }
+
+    /* UPDATED: split-color letter background for contrast (upper vs lower) */
+    .letter.warm {
+      /* top: very soft cream; bottom: subtle blush — clear contrast while staying warm */
+      background: linear-gradient(180deg, #fffaf6 0%, #fffaf6 48%, #fff0f4 52%, #fff0f4 100%);
+      color: #2b1a18;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.08);
     }
+    /* subtle dividing line between halves */
+    .letter.warm::after {
+      content: "";
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 50%;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,111,97,0.06), rgba(255,255,255,0));
+      transform: translateY(-0.5px);
+      z-index:2;
+      pointer-events:none;
+    }
+
+    /* hearts container (absolute, sits behind text) */
+    .letter .hearts {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    /* Heart shape using CSS variables for consistent sizing */
+    .letter .heart {
+      --s: 36px;            /* base size */
+      --scale: 1;
+      position: absolute;
+      width: var(--s);
+      height: var(--s);
+      transform: rotate(-45deg) scale(var(--scale));
+      background: linear-gradient(180deg,#ff6f61 0%, #ff9aa2 100%);
+      border-radius: 6px;
+      opacity: 0.95;
+      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.08));
+      left: 0;
+      top: 0;
+      z-index:1;
+    }
+    .letter .heart::before,
+    .letter .heart::after {
+      content: "";
+      position: absolute;
+      width: var(--s);
+      height: var(--s);
+      background: inherit;
+      border-radius: 50%;
+      top: calc(-1 * var(--s) / 2);
+      left: 0;
+      z-index:1;
+    }
+    .letter .heart::after {
+      left: calc(var(--s) / 2);
+      top: 0;
+    }
+
+    /* size variants */
+    .heart.small { --s: 22px; --scale: 0.65; }
+    .heart.large { --s: 56px; --scale: 1.4; }
+
+    /* positions for hearts (kept inside letter bounds) */
+    .h1 { top: 8%; left: 6%; }
+    .h2 { top: 6%; right: 10%; left: auto; }
+    .h3 { bottom: 18%; left: 12%; top: auto; }
+    .h4 { bottom: 6%; right: 10%; left: auto; top: auto; }
+    .h5 { top: 40%; left: 50%; transform: translateX(-50%) rotate(-45deg) scale(1.0); opacity:0.6; }
+    .h6 { top: 28%; right: 36%; left: auto; }
+
+    /* ensure text sits above hearts and dividing line */
+    .letter .content { z-index: 3; }
+
+    @media (max-width:700px){
+      .letter .heart.large { transform: rotate(-45deg) scale(1.1); }
+      .letter .heart { --s: 24px; }
+      .letter .heart::before, .letter .heart::after { top: calc(-1 * var(--s) / 2); width: var(--s); height: var(--s); }
+    }
+
+    /* caption style placed above the envelope on the letter page */
+    .letter-caption {
+      font-size: 0.95rem;
+      color: #fff7f6;
+      background: linear-gradient(90deg, rgba(255,111,97,0.18), rgba(255,154,158,0.12));
+      padding: 8px 14px;
+      border-radius: 999px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+      margin-bottom: 6px;
+      user-select: none;
+    }
+
+    .next-row { margin-top:18px; display:flex; gap:12px; justify-content:center; z-index:1; }
   </style>
 </head>
 <body>
   <!-- Stage 1 -->
   <div class="stage active" id="stage1">
     <h1>Shall we begin?</h1>
-    <button class="yes" onclick="goToStage(2)">Let's Start ❤️</button>
+    <button onclick="goToStage(2)">Let's Start ❤️</button>
   </div>
 
-  <!-- Stage 2 -->
+  <!-- Stage 2 (question) -->
   <div class="stage" id="stage2">
     <div id="valentineQuestion"></div>
   </div>
 
   <!-- Stage 3 -->
   <div class="stage" id="stage3">
-    <h1 class="stage3-text">Did you click No by mistake?</h1>
-    <h2 class="stage3-text">Let's try again...</h2>
-    <button class="yes" onclick="sayYes()">Yes ❤️</button>
-    <button class="no" onclick="goToStage(4)">No 💔</button>
+    <h1 class="smooth-text">Did you click No by mistake?</h1>
+    <h2 class="smooth-text">Let's try again...</h2>
+    <div>
+      <button onclick="sayYes()">Yes ❤️</button>
+      <button class="secondary" onclick="goToStage(4)">No 💔</button>
+    </div>
   </div>
 
   <!-- Stage 4 -->
   <div class="stage" id="stage4">
-    <h1 class="stage4-text">Don't bully me 😭</h1>
-    <h2 class="stage4-text">Only one choice now...</h2>
-    <button class="yes" onclick="sayYes()">Yes ❤️</button>
+    <h1 class="smooth-text">Don't bully me 😭</h1>
+    <h2 class="smooth-text">Only one choice now...</h2>
+    <button onclick="sayYes()">Yes ❤️</button>
+  </div>
+
+  <!-- Letter stage -->
+  <div class="stage" id="stageLetter">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+      <!-- Caption added above the envelope -->
+      <div class="letter-caption" id="letterCaption" aria-hidden="true">Touch the letter</div>
+
+      <div class="envelope" id="envelope" aria-label="Envelope. Click to open.">
+        <div class="env-body"></div>
+        <div class="env-flap"></div>
+        <div style="position:absolute;left:12px;right:12px;top:12px;bottom:12px;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+          <svg width="120" height="80" viewBox="0 0 120 80" aria-hidden="true">
+            <rect x="0" y="0" width="120" height="80" rx="8" fill="rgba(255,255,255,0.85)"/>
+            <path d="M0 0 L60 40 L120 0" fill="rgba(255,111,97,0.12)"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="letter" id="letterCard" role="region" aria-hidden="true">
+        <!-- hearts container (behind the text) -->
+        <div class="hearts" aria-hidden="true">
+          <div class="heart h1"></div>
+          <div class="heart h2 small"></div>
+          <div class="heart h3"></div>
+          <div class="heart h4 large"></div>
+          <div class="heart h5 small"></div>
+          <div class="heart h6"></div>
+        </div>
+
+        <div class="content" id="letterContent"></div>
+      </div>
+
+      <div class="next-row">
+        <button class="secondary" id="backToTrain">Back</button>
+      </div>
+    </div>
   </div>
 
   <script>
-    function goToStage(stageNumber) {
-      document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
-      document.getElementById('stage' + stageNumber).classList.add('active');
+    /* image list (replace with your actual filenames in images/ folder) */
+    const IMAGES = [
+      'images/s1.jpeg','images/s2.jpeg','images/s3.jpeg','images/s4.jpeg',
+      'images/s5.jpeg','images/s6.jpeg','images/s7.jpeg','images/s8.jpeg',
+      'images/s9.jpeg','images/s10.jpeg','images/s11.jpeg','images/s12.jpeg',
+      'images/s13.jpeg','images/s14.jpeg','images/s15.jpeg','images/s16.jpeg'
+    ];
 
-      if(stageNumber === 2) {
-        const container = document.getElementById("valentineQuestion");
-        container.innerHTML = "";
+    /* Navigation helpers */
+    function goToStage(n) {
+      document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
+      const el = document.getElementById('stage' + n);
+      if (el) el.classList.add('active');
+
+      if (n === 2) {
+        const container = document.getElementById('valentineQuestion');
+        container.innerHTML = '';
         setTimeout(() => {
           container.innerHTML = `
             <h1 class="smooth-text">Will you be my Valentine?</h1>
-            <button class="yes show-button delay1" onclick="sayYes()">Yes ❤️</button>
-            <button class="no show-button delay2" onclick="goToStage(3)">No 💔</button>
+            <div style="margin-top:18px;">
+              <button class="smooth-text" onclick="sayYes()">Yes ❤️</button>
+              <button class="secondary smooth-text" onclick="goToStage(3)">No 💔</button>
+            </div>
           `;
-        }, 3000);
+        }, 300);
       }
     }
 
-    function sayYes() {
-      document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
-      const finalStage = document.createElement("div");
-      finalStage.className = "stage active";
-      finalStage.style.position = "relative";
-      finalStage.innerHTML = `
-        <!-- Background video -->
-        <video autoplay muted loop class="bg-video">
-          <source src="backgroundv.mp4" type="video/mp4">
-          Your browser does not support the video tag.
-        </video>
+    /* Build the train DOM (first set + duplicate set) */
+    function buildTrainDOM(container) {
+      container.innerHTML = '';
+      IMAGES.forEach(src => container.appendChild(createCard(src)));
+      IMAGES.forEach(src => container.appendChild(createCard(src)));
+    }
 
-        <!-- Overlay content -->
-        <div class="overlay">
+    function createCard(src) {
+      const card = document.createElement('div');
+      card.className = 'image-card';
+      const inner = document.createElement('div');
+      inner.className = 'image-inner';
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = '';
+      img.draggable = false;
+      inner.appendChild(img);
+      card.appendChild(inner);
+      return card;
+    }
+
+    /* Show final train stage with warm background and letter option */
+    function sayYes() {
+      // hide other stages
+      document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
+
+      // remove existing final stage if present
+      const existing = document.getElementById('finalStage');
+      if (existing) existing.remove();
+
+      // create final stage element
+      const finalStage = document.createElement('div');
+      finalStage.id = 'finalStage';
+      finalStage.className = 'stage active';
+      finalStage.innerHTML = `
+        <div style="width:100%;max-width:1200px;padding:18px;box-sizing:border-box;position:relative;">
           <h1>Yay! You said YES ❤️</h1>
-          <div class="image-train">
-            <img src="s1.jpeg" alt="Image 1">
-            <img src="s2.jpeg" alt="Image 2">
-            <img src="s3.jpeg" alt="Image 3">
-            <img src="s4.jpeg" alt="Image 4">
-            <img src="s5.jpeg" alt="Image 5">
-            <img src="s6.jpeg" alt="Image 6">
-            <img src="s7.jpeg" alt="Image 7">
-            <img src="s8.jpeg" alt="Image 8">
-            <img src="s9.jpeg" alt="Image 9">
-            <img src="s10.jpeg" alt="Image 10">
-            <img src="s11.jpeg" alt="Image 11">
-            <img src="s12.jpeg" alt="Image 12">
-            <img src="s13.jpeg" alt="Image 13">
-            <img src="s14.jpeg" alt="Image 14">
-            <img src="s15.jpeg" alt="Image 15">
-            <img src="s16.jpeg" alt="Image 16">
+          <div class="wrap">
+            <div class="train-viewport" id="trainViewport">
+              <div class="inner-warm warm-gradient" aria-hidden="true"></div>
+              <div class="image-train" id="imageTrain"></div>
+            </div>
+          </div>
+          <div class="next-row" style="margin-top:12px;">
+            <button id="nextToLetter">Open Letter</button>
+            <button class="secondary" id="restart">Restart</button>
           </div>
         </div>
       `;
       document.body.appendChild(finalStage);
+
+      // build train DOM and start animation
+      const train = document.getElementById('imageTrain');
+      buildTrainDOM(train);
+      waitForImagesAndAnimate(train);
+
+      // wire up buttons
+      document.getElementById('nextToLetter').addEventListener('click', () => {
+        goToLetter();
+      });
+      document.getElementById('restart').addEventListener('click', () => {
+        const fs = document.getElementById('finalStage');
+        if (fs) fs.remove();
+        const prevStyle = document.getElementById('dynamic-train-style');
+        if (prevStyle) prevStyle.remove();
+        goToStage(1);
+      });
     }
+
+    /* Wait for images to load and then measure + animate */
+    function waitForImagesAndAnimate(train) {
+      const imgs = train.querySelectorAll('img');
+      let loaded = 0;
+      const total = imgs.length;
+      if (total === 0) return;
+
+      imgs.forEach(img => {
+        if (img.complete) loaded++;
+        else {
+          img.addEventListener('load', () => { loaded++; tryStart(); }, { once: true });
+          img.addEventListener('error', () => { loaded++; tryStart(); }, { once: true });
+        }
+      });
+      tryStart();
+
+      function tryStart() {
+        if (loaded === total) startSeamless(train);
+      }
+    }
+
+    /* Measure first set width (including gaps) and inject precise animation */
+    function startSeamless(train) {
+      const firstSet = Array.from(train.children).slice(0, IMAGES.length);
+
+      // read gap from CSS variable (fallback)
+      const rootStyle = getComputedStyle(document.documentElement);
+      const gap = parseFloat(rootStyle.getPropertyValue('--gap-px')) || 18;
+
+      // measure widths precisely (getBoundingClientRect excludes margins)
+      let totalWidth = 0;
+      firstSet.forEach((el, idx) => {
+        const rect = el.getBoundingClientRect();
+        totalWidth += rect.width;
+        if (idx < firstSet.length - 1) totalWidth += gap;
+      });
+
+      // fallback if measurement fails
+      if (!totalWidth || totalWidth < 10) {
+        totalWidth = train.getBoundingClientRect().width / 2;
+      }
+
+      const shiftPx = Math.round(totalWidth);
+
+      // remove previous dynamic style if present
+      const prev = document.getElementById('dynamic-train-style');
+      if (prev) prev.remove();
+
+      // speed: px per second (tweakable)
+      const pxPerSecond = 160;
+      const duration = Math.max(6, shiftPx / pxPerSecond);
+
+      // inject keyframes that translate exactly by shiftPx
+      const style = document.createElement('style');
+      style.id = 'dynamic-train-style';
+      style.textContent = `
+        @keyframes trainScrollDynamic {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-${shiftPx}px); }
+        }
+        #imageTrain.animated {
+          animation-name: trainScrollDynamic;
+          animation-duration: ${duration}s;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+        }
+      `;
+      document.head.appendChild(style);
+
+      // remove right margin on the very last element to avoid seam gap
+      const allCards = train.querySelectorAll('.image-card');
+      if (allCards.length) allCards[allCards.length - 1].style.marginRight = '0px';
+
+      // start animation
+      train.classList.add('animated');
+    }
+
+    /* Letter stage: open envelope and type letter */
+    function goToLetter() {
+      // hide other stages
+      document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
+      const letterStage = document.getElementById('stageLetter');
+      letterStage.classList.add('active');
+
+      const envelope = document.getElementById('envelope');
+      const letterCard = document.getElementById('letterCard');
+      const letterContent = document.getElementById('letterContent');
+
+      envelope.classList.remove('open');
+      letterCard.classList.remove('visible');
+      letterCard.setAttribute('aria-hidden', 'true');
+      letterContent.textContent = '';
+
+      // apply the white warm background and show hearts
+      letterCard.classList.add('warm');
+
+      envelope.onclick = () => {
+        if (envelope.classList.contains('open')) return;
+        envelope.classList.add('open');
+
+        setTimeout(() => {
+          letterCard.classList.add('visible');
+          letterCard.setAttribute('aria-hidden', 'false');
+
+          const fullText = `My dearest Suha,
+
+Every time I think of you, my day brightens. You make ordinary moments feel extraordinary. I hope this little surprise makes you smile.
+
+Will you be mine, today and always?
+
+With all my heart,
+— Nithin`;
+
+          typeText(letterContent, fullText, 18);
+        }, 520);
+      };
+
+      document.getElementById('backToTrain').onclick = () => {
+        letterStage.classList.remove('active');
+        const finalStage = document.getElementById('finalStage');
+        if (finalStage) finalStage.classList.add('active');
+      };
+    }
+
+    /* Typewriter effect */
+    function typeText(container, text, speedMs) {
+      container.textContent = '';
+      container.classList.add('typing');
+      let i = 0;
+      const step = () => {
+        if (i <= text.length) {
+          container.textContent = text.slice(0, i);
+          i++;
+          setTimeout(step, speedMs);
+        } else {
+          container.classList.remove('typing');
+        }
+      };
+      step();
+    }
+
+    /* Rebuild train on resize (debounced) to keep measurements accurate */
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const train = document.getElementById('imageTrain');
+        if (train) {
+          train.classList.remove('animated');
+          const prev = document.getElementById('dynamic-train-style');
+          if (prev) prev.remove();
+          buildTrainDOM(train);
+          waitForImagesAndAnimate(train);
+        }
+      }, 220);
+    });
+
+    // initialize to stage 1
+    goToStage(1);
   </script>
 </body>
-
 </html>
