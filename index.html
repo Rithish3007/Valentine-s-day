@@ -190,14 +190,12 @@
     .letter.visible { transform: translateY(0) scale(1); opacity: 1; }
     .letter .content { font-family: Georgia, 'Times New Roman', serif; font-size: 1.05rem; line-height: 1.6; color: #222; white-space: pre-wrap; position:relative; z-index:3; }
 
-    /* UPDATED: split-color letter background for contrast (upper vs lower) */
+    /* split-color letter background for contrast (upper vs lower) */
     .letter.warm {
-      /* top: very soft cream; bottom: subtle blush — clear contrast while staying warm */
       background: linear-gradient(180deg, #fffaf6 0%, #fffaf6 48%, #fff0f4 52%, #fff0f4 100%);
       color: #2b1a18;
       box-shadow: 0 20px 60px rgba(0,0,0,0.08);
     }
-    /* subtle dividing line between halves */
     .letter.warm::after {
       content: "";
       position: absolute;
@@ -222,7 +220,7 @@
 
     /* Heart shape using CSS variables for consistent sizing */
     .letter .heart {
-      --s: 36px;            /* base size */
+      --s: 36px;
       --scale: 1;
       position: absolute;
       width: var(--s);
@@ -253,11 +251,9 @@
       top: 0;
     }
 
-    /* size variants */
     .heart.small { --s: 22px; --scale: 0.65; }
     .heart.large { --s: 56px; --scale: 1.4; }
 
-    /* positions for hearts (kept inside letter bounds) */
     .h1 { top: 8%; left: 6%; }
     .h2 { top: 6%; right: 10%; left: auto; }
     .h3 { bottom: 18%; left: 12%; top: auto; }
@@ -265,7 +261,6 @@
     .h5 { top: 40%; left: 50%; transform: translateX(-50%) rotate(-45deg) scale(1.0); opacity:0.6; }
     .h6 { top: 28%; right: 36%; left: auto; }
 
-    /* ensure text sits above hearts and dividing line */
     .letter .content { z-index: 3; }
 
     @media (max-width:700px){
@@ -286,7 +281,34 @@
       user-select: none;
     }
 
-    .next-row { margin-top:18px; display:flex; gap:12px; justify-content:center; z-index:1; }
+    /* small floating audio controls (visible when audio is available) */
+    .audio-controls {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 9999;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      background: rgba(0,0,0,0.45);
+      padding:8px;
+      border-radius:12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      backdrop-filter: blur(6px);
+    }
+    .audio-controls button {
+      background: transparent;
+      border: none;
+      color: #fff;
+      padding:6px 8px;
+      cursor:pointer;
+      font-size:14px;
+      border-radius:8px;
+    }
+    .audio-controls button:hover { background: rgba(255,255,255,0.06); }
+
+    .audio-status { font-size:13px; color:#fff; opacity:0.95; margin-left:6px; }
+
   </style>
 </head>
 <body>
@@ -355,6 +377,20 @@
     </div>
   </div>
 
+  <!-- Audio element (single source used for both train and letter pages) -->
+  <!-- Replace 'audio/song.mp3' with your actual audio file path. -->
+  <audio id="pageAudio" loop preload="auto">
+    <source src="song.mp3" type="audio/mpeg">
+    <!-- Fallback text -->
+  </audio>
+
+  <!-- Floating audio controls -->
+  <div class="audio-controls" id="audioControls" style="display:none;">
+    <button id="audioPlayPause" title="Play/Pause">▶️</button>
+    <button id="audioMuteToggle" title="Mute/Unmute">🔊</button>
+    <div class="audio-status" id="audioStatus">Paused</div>
+  </div>
+
   <script>
     /* image list (replace with your actual filenames in images/ folder) */
     const IMAGES = [
@@ -364,11 +400,76 @@
       's13.jpeg','s14.jpeg','s15.jpeg','s16.jpeg'
     ];
 
+    const audio = document.getElementById('pageAudio');
+    const audioControls = document.getElementById('audioControls');
+    const audioPlayPause = document.getElementById('audioPlayPause');
+    const audioMuteToggle = document.getElementById('audioMuteToggle');
+    const audioStatus = document.getElementById('audioStatus');
+
+    // Attempt to play; if browser blocks autoplay, show controls and wait for user interaction.
+    function tryPlayAudio() {
+      if (!audio) return Promise.resolve();
+      return audio.play().then(() => {
+        showAudioControls(true);
+      }).catch(() => {
+        // Autoplay blocked — show controls so user can start manually.
+        showAudioControls(false);
+      });
+    }
+
+    function showAudioControls(isPlaying) {
+      audioControls.style.display = 'flex';
+      updateAudioUI(isPlaying);
+    }
+
+    function updateAudioUI(isPlaying) {
+      audioPlayPause.textContent = isPlaying ? '⏸️' : '▶️';
+      audioMuteToggle.textContent = audio.muted ? '🔇' : '🔊';
+      audioStatus.textContent = isPlaying ? 'Playing' : 'Paused';
+    }
+
+    audioPlayPause.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play().then(() => updateAudioUI(true)).catch(() => updateAudioUI(false));
+      } else {
+        audio.pause();
+        updateAudioUI(false);
+      }
+    });
+
+    audioMuteToggle.addEventListener('click', () => {
+      audio.muted = !audio.muted;
+      updateAudioUI(!audio.paused);
+    });
+
+    // Stop audio when leaving train or letter pages
+    function stopAudio() {
+      if (!audio) return;
+      audio.pause();
+      audio.currentTime = 0;
+      updateAudioUI(false);
+    }
+
+    // Play audio (with try/catch for autoplay restrictions)
+    function playAudio() {
+      if (!audio) return;
+      audio.play().then(() => updateAudioUI(true)).catch(() => {
+        // If blocked, ensure controls visible so user can start manually
+        showAudioControls(false);
+      });
+    }
+
     /* Navigation helpers */
     function goToStage(n) {
       document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
       const el = document.getElementById('stage' + n);
       if (el) el.classList.add('active');
+
+      // If user navigates away from finalStage or letter, stop audio if desired
+      // We'll only auto-play on final train stage and when opening the letter.
+      if (n !== 'final' && n !== 0) {
+        // nothing special here; audio is managed where created
+      }
 
       if (n === 2) {
         const container = document.getElementById('valentineQuestion');
@@ -441,6 +542,9 @@
       buildTrainDOM(train);
       waitForImagesAndAnimate(train);
 
+      // Try to play audio now that user has interacted (click that triggered sayYes)
+      playAudio();
+
       // wire up buttons
       document.getElementById('nextToLetter').addEventListener('click', () => {
         goToLetter();
@@ -450,6 +554,7 @@
         if (fs) fs.remove();
         const prevStyle = document.getElementById('dynamic-train-style');
         if (prevStyle) prevStyle.remove();
+        stopAudio();
         goToStage(1);
       });
     }
@@ -554,27 +659,25 @@
         if (envelope.classList.contains('open')) return;
         envelope.classList.add('open');
 
+        // Play audio on envelope click as well (user interaction)
+        playAudio();
+
         setTimeout(() => {
           letterCard.classList.add('visible');
           letterCard.setAttribute('aria-hidden', 'false');
 
-          const fullText = `My dearest Suhahahahaha,
+          const fullText = `My dearest Suha,
 
 Every time I think of you, my day brightens. 
 You make ordinary moments feel extraordinary. 
-Even if you think you’re a storm of chatter,
-to me it’s the honey in tea,
-the laughter of children chasing kites,
-the warmth of bread just out of the oven—
-sweetness stitched into the fabric of life.
-And I cannot, will not,
+I cannot, will not,
 find anyone better than you,
 because you are the dawn’s first light
 spilling gold across the horizon,
 the eternal poem the universe whispers
 when silence feels too heavy.
 If you think you are getting attached,
-then please, my dear, by all means,
+then please, my dear , by all means,
 let your roots entwine with mine,
 like ivy embracing an ancient wall,
 because I want you to grow with me,
@@ -584,16 +687,14 @@ we will face it all together.
 I will always be by your side,
 holding your hand through it all,
 our steps in rhythm,
-our hearts unshaken.
-
-
+our hearts unshaken
 
 I hope this little surprise makes you smile.
 
-Will you be mine, today and always thangoo ?   
+Will you be mine, today and always?
 
 With all my heart,
-— Nithin`;
+— Suha`;
 
           typeText(letterContent, fullText, 18);
         }, 520);
@@ -603,6 +704,7 @@ With all my heart,
         letterStage.classList.remove('active');
         const finalStage = document.getElementById('finalStage');
         if (finalStage) finalStage.classList.add('active');
+        // keep audio playing if it was playing on the train; otherwise leave as is
       };
     }
 
@@ -639,14 +741,17 @@ With all my heart,
       }, 220);
     });
 
+    // If user navigates away from page (close/tab), pause audio
+    window.addEventListener('pagehide', () => {
+      if (audio && !audio.paused) audio.pause();
+    });
+
     // initialize to stage 1
     goToStage(1);
+
+    // Try to show audio controls early (but don't autoplay until user interacts)
+    // If the browser allows autoplay (some desktop browsers do), this will start.
+    tryPlayAudio();
   </script>
 </body>
 </html>
-
-
-
-
-
-
